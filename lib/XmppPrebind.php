@@ -134,7 +134,7 @@ class XmppPrebind {
 	 * @param string $password Password
 	 * @param string $route Route
 	 */
-	public function connect($username, $password, $route = false) {
+	public function connect($username, $password, $route = false, $force_encryption_method = null) {
 		$this->jid      = $username . '@' . $this->jabberHost;
 
 		if($this->resource) {
@@ -175,15 +175,23 @@ class XmppPrebind {
 			$this->mechanisms[] = $value->nodeValue;
 		}
 
-		if (in_array(self::ENCRYPTION_DIGEST_MD5, $this->mechanisms)) {
-			$this->encryption = self::ENCRYPTION_DIGEST_MD5;
-		} elseif (in_array(self::ENCRYPTION_CRAM_MD5, $this->mechanisms)) {
-			$this->encryption = self::ENCRYPTION_CRAM_MD5;
-		} elseif (in_array(self::ENCRYPTION_PLAIN, $this->mechanisms)) {
-			$this->encryption = self::ENCRYPTION_PLAIN;
-		} else {
-			throw new XmppPrebindConnectionException("No encryption supported by the server is supported by this library.");
-		}
+		if($force_encryption_method !== null) {
+		    if(in_array($force_encryption_method, $this->mechanisms)) {
+                $this->encryption = $force_encryption_method;
+            } else {
+                throw new XmppPrebindConnectionException("Forced encryption is not supported by the server.");
+            }
+        } else {
+            if (in_array(self::ENCRYPTION_DIGEST_MD5, $this->mechanisms)) {
+                $this->encryption = self::ENCRYPTION_DIGEST_MD5;
+            } elseif (in_array(self::ENCRYPTION_CRAM_MD5, $this->mechanisms)) {
+                $this->encryption = self::ENCRYPTION_CRAM_MD5;
+            } elseif (in_array(self::ENCRYPTION_PLAIN, $this->mechanisms)) {
+                $this->encryption = self::ENCRYPTION_PLAIN;
+            } else {
+                throw new XmppPrebindConnectionException("No encryption supported by the server is supported by this library.");
+            }
+        }
 
 		$this->debug($this->encryption, 'encryption used');
 
